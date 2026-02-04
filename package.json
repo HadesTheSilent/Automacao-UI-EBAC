@@ -1,0 +1,26 @@
+{
+  "name": "ebac-ui-automation",
+  "version": "1.0.0",
+  "description": "Testes automatizados para loja EBAC - Módulo Automação de UI",
+  "main": "index.js",
+  "scripts": {
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "test:account": "cypress run --spec 'cypress/e2e/account-creation/**'",
+    "test:checkout": "cypress run --spec 'cypress/e2e/checkout/**'",
+    "test:all": "cypress run"
+  },
+  "keywords": [
+    "cypress",
+    "e2e",
+    "testing",
+    "automation",
+    "ebac"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "cypress": "^13.6.3",
+    "faker": "^5.5.3"
+  }
+}
