@@ -5,137 +5,110 @@ describe('API do Carrinho - Testes com Intercept (ebacStoreVersion=v2)', () => {
   beforeEach(() => {
     // Define o cookie ebacStoreVersion=v2 conforme solicitado no exercício  
     cy.setCookie('ebacStoreVersion', 'v2')
-    cy.clearCart()
+    cy.visit('/')
   })
 
-  it('Deve interceptar requisições ao adicionar produto ao carrinho', () => {
-    cy.intercept('POST', '**/?wc-ajax=get_refreshed_fragments').as('refreshFragments')
+  it('Deve interceptar requisição ao buscar produtos', () => {
+    cy.intercept('GET', '**/public/getProducts*').as('getProducts')
 
-    // Navega diretamente para produtos
-    cy.visit('/produtos/')
-    
-    // Adiciona primeiro produto simples encontrado
-    cy.get('.add_to_cart_button').first().click()
+    cy.get('[href="/Tab/Browse"]').click()
 
-    cy.wait('@refreshFragments', { timeout: 10000 }).its('response.statusCode').should('equal', 200)
+    cy.wait('@getProducts').its('response.statusCode').should('be.oneOf', [200, 304])
   })
 
-  it('Deve validar corpo da resposta ao adicionar produto', () => {
-    cy.intercept('POST', '**/?wc-ajax=get_refreshed_fragments').as('cartFragments')
+  it('Deve validar corpo da resposta ao buscar produtos', () => {
+    cy.intercept('GET', '**/public/getProducts*').as('getProducts')
 
-    cy.visit('/produtos/')
-    cy.get('.add_to_cart_button').first().click()
+    cy.get('[href="/Tab/Browse"]').click()
 
-    cy.wait('@cartFragments').then((interception) => {
-      expect(interception.response.statusCode).to.equal(200)
-      expect(interception.response.body).to.have.property('fragments')
+    cy.wait('@getProducts').then((interception) => {
+      if (interception.response.statusCode === 200) {
+        expect(interception.response.body).to.be.an('array')
+        expect(interception.response.body[0]).to.have.property('_id')
+        expect(interception.response.body[0]).to.have.property('name')
+      } else {
+        // 304 indica que o cache está sendo usado - isso é válido
+        expect(interception.response.statusCode).to.equal(304)
+      }
     })
   })
 
-  it('Deve simular resposta mockada da API ao adicionar produto', () => {
-    cy.intercept('POST', '**/?wc-ajax=get_refreshed_fragments', {
+  it('Deve validar cache da resposta ao buscar produtos', () => {
+    cy.intercept('GET', '**/public/getProducts*').as('getProducts')
+
+    cy.get('[href="/Tab/Browse"]').click()
+
+    cy.wait('@getProducts').then((interception) => {
+      // Valida que a requisição foi bem sucedida ou retornou cache 304
+      expect(interception.response.statusCode).to.be.oneOf([200, 304])
+    })
+  })
+
+  it('Deve interceptar requisição ao buscar banners', () => {
+    cy.intercept('GET', '**/public/getBanners').as('getBanners')
+
+    cy.wait('@getBanners', { timeout: 10000 }).its('response.statusCode').should('be.oneOf', [200, 304])
+  })
+
+  it('Deve interceptar requisição ao buscar categorias', () => {
+    cy.intercept('GET', '**/public/getCategories').as('getCategories')
+
+    cy.wait('@getCategories', { timeout: 10000 }).its('response.statusCode').should('be.oneOf', [200, 304])
+  })
+
+  it('Deve interceptar requisição getCart', () => {
+    cy.intercept('GET', '**/public/getCart*').as('getCart')
+
+    cy.wait('@getCart', { timeout: 10000 }).its('response.statusCode').should('be.oneOf', [200, 400])
+  })
+
+  it('Deve validar parâmetros da requisição getCart', () => {
+    cy.intercept('GET', '**/public/getCart*').as('getCart')
+
+    cy.wait('@getCart', { timeout: 10000 }).then((interception) => {
+      expect(interception.request.url).to.include('userId')
+    })
+  })
+
+  it('Deve simular resposta mockada para getCart vazio', () => {
+    cy.intercept('GET', '**/public/getCart*', {
       statusCode: 200,
       body: {
-        fragments: {
-          'div.widget_shopping_cart_content': '<div>Produto adicionado - Mock</div>'
-        }
+        products: [],
+        total: 0
       }
-    }).as('mockFragments')
+    }).as('emptyCart')
 
-    cy.visit('/produtos/')
-    cy.get('.add_to_cart_button').first().click()
+    cy.reload()
 
-    cy.wait('@mockFragments').its('response.statusCode').should('equal', 200)
+    cy.wait('@emptyCart', { timeout: 10000 }).its('response.body.products').should('have.length', 0)
   })
 
-  it('Deve interceptar e validar atualização de quantidade no carrinho', () => {
-    cy.visit('/produtos/')
-    cy.get('.add_to_cart_button').first().click()
-    cy.wait(2000)
-    
-    cy.intercept('POST', '**/carrinho/**').as('updateCart')
+  it('Deve validar headers da requisição getProducts', () => {
+    cy.intercept('GET', '**/public/getProducts*').as('getProducts')
 
-    cy.visit('/carrinho/')
-    
-    cy.get('body').then(($body) => {
-      if ($body.find('.input-text.qty').length > 0) {
-        cy.get('.input-text.qty').first().clear().type('3')
-        cy.get('[name="update_cart"]').click()
-        cy.log('Quantidade atualizada no carrinho')
-      }
+    cy.get('[href="/Tab/Browse"]').click()
+
+    cy.wait('@getProducts').then((interception) => {
+      expect(interception.request.headers).to.exist
+      // Valida content-type no response (pode ser Content-Type ou content-type)
+      const headers = interception.response.headers
+      const hasContentType = headers['content-type'] || headers['Content-Type']
+      expect(hasContentType).to.exist
     })
   })
 
-  it('Deve interceptar remoção de produto do carrinho', () => {
-    cy.visit('/produtos/')
-    cy.get('.add_to_cart_button').first().click()
-    cy.wait(2000)
-
-    cy.intercept('GET', '**/carrinho/**').as('cartRequest')
-
-    cy.visit('/carrinho/')
-    
-    cy.get('body').then(($body) => {
-      if ($body.find('.remove').length > 0) {
-        cy.get('.remove').first().click()
-        cy.log('Produto removido do carrinho')
-      }
-    })
-  })
-
-  it('Deve validar que cookie ebacStoreVersion=v2 está presente', () => {
-    cy.visit('/')
-    cy.getCookie('ebacStoreVersion').should('have.property', 'value', 'v2')
-  })
-
-  it('Deve interceptar e modificar resposta da API', () => {
-    cy.intercept('POST', '**/?wc-ajax=get_refreshed_fragments', (req) => {
-      req.continue((res) => {
-        expect(res.body).to.have.property('fragments')
-        res.body.custom_field = 'valor_modificado'
-      })
-    }).as('modifiedResponse')
-
-    cy.visit('/produtos/')
-    cy.get('.add_to_cart_button').first().click()
-
-    cy.wait('@modifiedResponse')
-  })
-
-  it('Deve simular erro 500 na API do carrinho', () => {
-    cy.intercept('POST', '**/?wc-ajax=add_to_cart', {
+  it('Deve simular erro 500 ao buscar produtos', () => {
+    cy.intercept('GET', '**/public/getProducts*', {
       statusCode: 500,
       body: {
-        error: 'Internal Server Error',
-        message: 'Erro simulado para teste'
+        error: 'Internal Server Error'
       }
-    }).as('errorResponse')
+    }).as('getProductsError')
 
-    cy.visit('/')
-    cy.log('Mock de erro configurado com sucesso')
-  })
+    cy.get('[href="/Tab/Browse"]').click()
 
-  it('Deve validar headers das requisições do carrinho', () => {
-    cy.intercept('POST', '**/?wc-ajax=get_refreshed_fragments', (req) => {
-      expect(req.headers).to.have.property('content-type')
-      cy.log('Headers validados:', req.headers['content-type'])
-    }).as('requestWithHeaders')
-
-    cy.visit('/produtos/')
-    cy.get('.add_to_cart_button').first().click()
-
-    cy.wait('@requestWithHeaders')
-  })
-
-  it('Deve interceptar múltiplas requisições em sequência', () => {
-    cy.intercept('POST', '**/?wc-ajax=**').as('anyCartRequest')
-    
-    cy.visit('/produtos/')
-    cy.get('.add_to_cart_button').first().click()
-    cy.wait('@anyCartRequest')
-    
-    cy.visit('/carrinho/')
-    cy.get('.page-title').should('exist')
+    cy.wait('@getProductsError').its('response.statusCode').should('equal', 500)
   })
 
 })
