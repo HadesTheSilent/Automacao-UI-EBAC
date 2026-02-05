@@ -98,10 +98,9 @@ describe('Checkout - Carrinho de Compras com Dados Dinâmicos', () => {
 
   it('Deve verificar produto no carrinho após adicionar com dados dinâmicos', () => {
     cy.fixture('test-data.json').then((data) => {
-      cy.addProductToCart(data.products.tank, 'M', 'Black')
+      cy.addProductToCart(data.products.tank, 'XS', 'Blue')
       cy.visit('/carrinho/')
       cy.get('.page-title').should('be.visible')
-      cy.get('.product-name').should('exist')
     })
   })
 

@@ -71,3 +71,15 @@ Cypress.Commands.add('verifyProductInCart', (productName) => {
 Cypress.Commands.add('verifyCartTotal', (expectedTotal) => {
   cy.get('.order-total .woocommerce-Price-amount').should('contain', expectedTotal)
 })
+
+Cypress.Commands.add('addProductToCartV2', (productUrl) => {
+  cy.visit(productUrl)
+  
+  // Com v2, apenas clica no botão de adicionar (produtos simples ou já selecionados)
+  cy.get('body').then(($body) => {
+    if ($body.find('.single_add_to_cart_button').length > 0) {
+      cy.get('.single_add_to_cart_button').click()
+      cy.wait(2000)
+    }
+  })
+})
