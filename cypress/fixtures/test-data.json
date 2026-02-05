@@ -3,19 +3,16 @@
     "username": "cliente@ebac.art.br",
     "password": "GD*peToHNJ1#c$sgk08EaYJQ"
   },
-  "billingData": {
-    "firstName": "João",
-    "lastName": "Silva",
-    "address": "Rua das Flores, 123",
-    "city": "São Paulo",
-    "state": "SP",
-    "postcode": "01234-567",
-    "phone": "(11) 98765-4321",
-    "email": "joao.silva@teste.com"
-  },
   "products": {
     "sweatshirt": "/product/ajax-full-zip-sweatshirt/",
     "ariel": "/product/ariel-roll-sleeve-sweatshirt/",
     "tank": "/product/atlas-fitness-tank/"
-  }
+  },
+  "states": [
+    "SP",
+    "RJ",
+    "MG",
+    "RS",
+    "PR"
+  ]
 }
