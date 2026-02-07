@@ -20,6 +20,7 @@ jobs:
     - run: npm run test:all || true
     - run: npm run report:merge
     - run: npm run report:generate
+    - run: cp cypress/reports/mochawesome/report.html cypress/reports/mochawesome/index.html
     - uses: actions/upload-pages-artifact@v3
       with:
         path: cypress/reports/mochawesome
