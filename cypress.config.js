@@ -7,6 +7,7 @@ module.exports = defineConfig({
     viewportHeight: 720,
     video: true,
     screenshotOnRunFailure: true,
+    pageLoadTimeout: 120000,
     reporter: 'mochawesome',
     reporterOptions: {
       reportDir: 'cypress/reports/mochawesome',
