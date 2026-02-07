@@ -16,7 +16,10 @@ jobs:
         node-version: '18'
         cache: 'npm'
     - run: npm ci
-    - run: npm run test:report
+    - run: npm run report:clean
+    - run: npm run test:all || true
+    - run: npm run report:merge
+    - run: npm run report:generate
     - uses: actions/upload-pages-artifact@v3
       with:
         path: cypress/reports/mochawesome
