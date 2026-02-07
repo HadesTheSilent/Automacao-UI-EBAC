@@ -12,7 +12,7 @@
     "test:all": "cypress run",
     "report:merge": "mochawesome-merge cypress/reports/mochawesome/*.json > cypress/reports/mochawesome/report.json",
     "report:generate": "marge cypress/reports/mochawesome/report.json -f report -o cypress/reports/mochawesome",
-    "report:clean": "powershell -Command \"if (Test-Path cypress/reports) { Remove-Item -Recurse -Force cypress/reports }\"",
+    "report:clean": "rm -rf cypress/reports",
     "test:report": "npm run report:clean && npm run test:all && npm run report:merge && npm run report:generate"
   },
   "keywords": [
